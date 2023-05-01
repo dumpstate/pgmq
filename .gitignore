@@ -1,0 +1,4 @@
+.nyc_output/
+lib/
+libtest/
+node_modules/

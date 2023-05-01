@@ -1,0 +1,12 @@
+.github
+.husky/
+.nyc_output/
+libtest/
+node_modules/
+src/
+test/
+.prettierrc.json
+docker-compose.yml
+package-lock.json
+test.tsconfig.json
+tsconfig.json

@@ -1,0 +1,28 @@
+{
+	"name": "@dumpstate/pgmq",
+	"version": "0.1.0",
+	"description": "PostgreSQL-based message queue",
+	"main": "lib/index.js",
+	"scripts": {
+		"build": "tsc --project tsconfig.json",
+		"build:test": "tsc --project test.tsconfig.json",
+		"lint": "npm run style:check",
+		"prepublish": "npm run build",
+		"style:check": "prettier --check .",
+		"style:fix": "prettier --write .",
+		"test": "npm run build:test && tap libtest/test/*.test.js libtest/test/**/*.test.js"
+	},
+	"author": "Albert Sadowski <asadowski@mailbox.org>",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^18.16.3",
+		"@types/tap": "^15.0.8",
+		"prettier": "^2.8.8",
+		"tap": "^16.3.4",
+		"typescript": "^5.0.4"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com/",
+		"access": "public"
+	}
+}

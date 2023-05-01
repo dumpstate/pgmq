@@ -1,0 +1,21 @@
+name: publish
+
+on:
+    workflow_run:
+        workflows: test
+        branches: main
+        types: completed
+
+jobs:
+    publish:
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - run: |
+                  npm config set //npm.pkg.github.com/:_authToken ${TOKEN}
+                  npm install
+                  npm publish
+              env:
+                  TOKEN: ${{ secrets.GITHUB_TOKEN }}
