@@ -62,7 +62,7 @@ export class Queue {
 	public moveToDlq(
 		task: Document<QueueType>,
 		error: string
-	): DBAction<[boolean, Document<DlqType>]> {
+	): DBAction<Document<QueueType>> {
 		return sequence(
 			this.queue.deleteById(task.id),
 			this.dlq.create({
@@ -71,12 +71,12 @@ export class Queue {
 				error,
 				payload: task.payload$,
 			})
-		)
+		).map((_) => task)
 	}
 
 	public moveToDone(
 		task: Document<QueueType>
-	): DBAction<[boolean, Document<DoneType>]> {
+	): DBAction<Document<QueueType>> {
 		return sequence(
 			this.queue.deleteById(task.id),
 			this.done.create({
@@ -84,7 +84,7 @@ export class Queue {
 				createdAt: this.now(),
 				payload: task.payload$,
 			})
-		)
+		).map((_) => task)
 	}
 
 	private now(): Date {
