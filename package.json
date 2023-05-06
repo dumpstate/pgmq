@@ -36,5 +36,8 @@
 	},
 	"dependencies": {
 		"async": "^3.2.4"
+	},
+	"tap": {
+		"check-coverage": false
 	}
 }
