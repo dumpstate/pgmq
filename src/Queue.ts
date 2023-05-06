@@ -36,7 +36,8 @@ export class Queue {
 			.find(
 				{
 					name: this.name,
-					visibleAt: { $lt: this.now().toISOString() },
+					// FIXME
+					// visibleAt: { $lt: this.now().toISOString() },
 				},
 				{ forUpdate: true, limit: 1 }
 			)

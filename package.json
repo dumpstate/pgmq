@@ -1,6 +1,6 @@
 {
 	"name": "@dumpstate/pgmq",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"description": "PostgreSQL-based message queue",
 	"main": "lib/index.js",
 	"scripts": {
