@@ -15,6 +15,7 @@ jobs:
 
             - run: |
                   npm config set //npm.pkg.github.com/:_authToken ${TOKEN}
+                  npm config set '@dumpstate:registry' 'https://npm.pkg.github.com'
                   npm install
                   npm publish
               env:

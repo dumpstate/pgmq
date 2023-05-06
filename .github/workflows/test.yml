@@ -15,7 +15,12 @@ jobs:
         steps:
             - uses: actions/checkout@v2
             - name: Install Dependencies
-              run: npm install
+              run: |
+                  npm config set '@dumpstate:registry' 'https://npm.pkg.github.com'
+                  npm config set '//npm.pkg.github.com/:_authToken' "${TOKEN}"
+                  npm install
+              env:
+                  TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Lint
               run: npm run lint
             - name: Test
