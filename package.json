@@ -15,11 +15,18 @@
 	"author": "Albert Sadowski <asadowski@mailbox.org>",
 	"license": "MIT",
 	"devDependencies": {
+		"@dumpstate/bongojs": "^0.20.0",
+		"@dumpstate/dbaction": "^0.2.1",
 		"@types/node": "^18.16.3",
 		"@types/tap": "^15.0.8",
+		"pg": "^8.10.0",
 		"prettier": "^2.8.8",
 		"tap": "^16.3.4",
 		"typescript": "^5.0.4"
+	},
+	"peerDependencies": {
+		"@dumpstate/bongojs": "^0.20.0",
+		"@dumpstate/dbaction": "^0.2.1"
 	},
 	"publishConfig": {
 		"registry": "https://npm.pkg.github.com/",
