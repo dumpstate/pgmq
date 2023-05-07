@@ -1,6 +1,6 @@
 {
 	"name": "@dumpstate/pgmq",
-	"version": "0.2.4",
+	"version": "0.3.0",
 	"description": "PostgreSQL-based message queue",
 	"main": "lib/index.js",
 	"scripts": {
@@ -17,7 +17,6 @@
 	"devDependencies": {
 		"@dumpstate/bongojs": "^0.20.0",
 		"@dumpstate/dbaction": "^0.2.1",
-		"@types/async": "^3.2.20",
 		"@types/node": "^18.16.3",
 		"@types/pg": "^8.6.6",
 		"@types/tap": "^15.0.8",
@@ -33,9 +32,6 @@
 	"publishConfig": {
 		"registry": "https://npm.pkg.github.com/",
 		"access": "public"
-	},
-	"dependencies": {
-		"async": "^3.2.4"
 	},
 	"tap": {
 		"check-coverage": false

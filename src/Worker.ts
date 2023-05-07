@@ -1,7 +1,6 @@
 import { DBAction, pure } from "@dumpstate/dbaction/lib/PG"
 import { Logger, newLogger } from "@dumpstate/bongojs/lib/logger"
 import { Bongo, Document } from "@dumpstate/bongojs"
-import { forever } from "async"
 import { PoolClient } from "pg"
 import { Queue } from "./Queue"
 import { QueueType } from "./model"
@@ -19,15 +18,15 @@ export abstract class Worker {
 
 	abstract process(task: Document<QueueType>): Promise<any>
 
-	public run(bongo: Bongo) {
+	public async run(bongo: Bongo) {
 		this.logger.info(`Starting worker loop: ${this.queue.name}`)
 		let count = 0
 
-		forever(
-			async () => {
-				this.logger.info(`Worker loop ${count}`)
+		try {
+			while (true) {
 				count += 1
-				return this.queue
+				this.logger.info(`Worker loop ${count}`)
+				const task = await this.queue
 					.dequeue()
 					.flatMap((task) => {
 						if (task === null) {
@@ -62,21 +61,14 @@ export abstract class Worker {
 						)
 					})
 					.transact(bongo.tr)
-					.then((res) => {
-						if (res === null) {
-							this.logger.info("Queue is empty, waiting")
-							return new Promise((resolve) =>
-								setTimeout(resolve, 1000)
-							)
-						} else {
-							return null
-						}
-					})
-			},
-			(err) => {
-				console.error(err)
-				process.exit(1)
+
+				await new Promise((resolve) =>
+					setTimeout(resolve, task === null ? 1000 : 100)
+				)
 			}
-		)
+		} catch (err) {
+			this.logger.error(`err when running the worker`, err)
+			process.exit(1)
+		}
 	}
 }
