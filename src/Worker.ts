@@ -7,7 +7,7 @@ import { Queue } from "./Queue"
 import { QueueType } from "./model"
 
 export abstract class Worker {
-	private readonly logger: Logger
+	protected readonly logger: Logger
 
 	public constructor(private readonly queue: Queue, logger?: Logger) {
 		if (logger) {
