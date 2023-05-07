@@ -5,6 +5,10 @@ import { PoolClient } from "pg"
 import { Queue } from "./Queue"
 import { QueueType } from "./model"
 
+const MAX_ATTEMPTS = 3
+const TIMEOUT_EMPTY = 1000
+const TIMEOUT_NON_EMPTY = 50
+
 export abstract class Worker {
 	protected readonly logger: Logger
 
@@ -20,12 +24,9 @@ export abstract class Worker {
 
 	public async run(bongo: Bongo) {
 		this.logger.info(`Starting worker loop: ${this.queue.name}`)
-		let count = 0
 
 		try {
 			while (true) {
-				count += 1
-				this.logger.info(`Worker loop ${count}`)
 				const task = await this.queue
 					.dequeue()
 					.flatMap((task) => {
@@ -48,7 +49,7 @@ export abstract class Worker {
 										`err when processing task ${task.id}`,
 										err
 									)
-									if (task.attempts$ > 3) {
+									if (task.attempts$ > MAX_ATTEMPTS) {
 										return this.queue
 											.moveToDlq(task, err)
 											.action(conn)
@@ -63,7 +64,10 @@ export abstract class Worker {
 					.transact(bongo.tr)
 
 				await new Promise((resolve) =>
-					setTimeout(resolve, task === null ? 1000 : 100)
+					setTimeout(
+						resolve,
+						task === null ? TIMEOUT_EMPTY : TIMEOUT_NON_EMPTY
+					)
 				)
 			}
 		} catch (err) {

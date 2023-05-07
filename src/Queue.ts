@@ -88,6 +88,10 @@ export class Queue {
 		).map((_) => task)
 	}
 
+	public purge(): DBAction<[number, number, number]> {
+		return sequence(this.queue.drop(), this.dlq.drop(), this.done.drop())
+	}
+
 	private now(): Date {
 		return new Date()
 	}

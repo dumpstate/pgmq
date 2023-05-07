@@ -1,6 +1,6 @@
 {
 	"name": "@dumpstate/pgmq",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "PostgreSQL-based message queue",
 	"main": "lib/index.js",
 	"scripts": {
@@ -10,7 +10,7 @@
 		"prepublish": "npm run build",
 		"style:check": "prettier --check .",
 		"style:fix": "prettier --write .",
-		"test": "npm run build:test && tap libtest/test/*.test.js libtest/test/**/*.test.js"
+		"test": "npm run build:test && PGUSER=pgmq PGHOST=localhost PGDATABASE=pgmq_db tap libtest/test/*.test.js libtest/test/**/*.test.js"
 	},
 	"author": "Albert Sadowski <asadowski@mailbox.org>",
 	"license": "MIT",
