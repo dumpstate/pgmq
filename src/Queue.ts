@@ -101,8 +101,11 @@ export class Queue {
 		const dlq = bongo.collection(DlqSchema)
 		const done = bongo.collection(DoneSchema)
 
-		// TODO introduce 'ensure' for individual collections
-		await bongo.migrate()
+		await sequence(
+			queue.ensurePartition(),
+			dlq.ensurePartition(),
+			done.ensurePartition()
+		).transact(bongo.tr)
 
 		return new Queue(name, queue, dlq, done)
 	}
