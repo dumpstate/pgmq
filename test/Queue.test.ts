@@ -27,4 +27,18 @@ test("Queue", async (t) => {
 			})
 			.transact(bongo.tr)
 	})
+
+	await t.test(
+		"dequeue returns null if visibility timeout not yet expired",
+		async (t) => {
+			const task = { foo: "bar" }
+
+			await queue
+				.enqueue(task, new Date(new Date().getTime() + 10000))
+				.transact(bongo.tr)
+
+			const found = await queue.dequeue().transact(bongo.tr)
+			t.match(found, null)
+		}
+	)
 })

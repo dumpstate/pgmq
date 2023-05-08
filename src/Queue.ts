@@ -18,14 +18,15 @@ export class Queue {
 	) {}
 
 	public enqueue(
-		task: Record<string, string>
+		task: Record<string, string>,
+		visibleAt: Date | null = null
 	): DBAction<Document<QueueType>> {
 		const now = this.now()
 
 		return this.queue.create({
 			name: this.name,
 			createdAt: now,
-			visibleAt: now,
+			visibleAt: visibleAt || now,
 			attempts: 0,
 			payload: task,
 		})
@@ -36,8 +37,7 @@ export class Queue {
 			.find(
 				{
 					name: this.name,
-					// FIXME
-					// visibleAt: { $lt: this.now().toISOString() },
+					visibleAt: { $lte: this.now() },
 				},
 				{ forUpdate: true, limit: 1 }
 			)
