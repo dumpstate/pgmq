@@ -7,6 +7,7 @@ test("Queue", async (t) => {
 	let queue: Queue
 
 	t.before(async () => {
+		await bongo.migrate()
 		queue = await Queue.create(bongo, "foo")
 	})
 
