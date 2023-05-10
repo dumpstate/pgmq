@@ -9,15 +9,30 @@ const MAX_ATTEMPTS = 3
 const TIMEOUT_EMPTY = 1000
 const TIMEOUT_NON_EMPTY = 50
 
+export interface WorkerOpts {
+	maxAttempts?: number
+	timeoutEmpty?: number
+	timeoutNonEmpty?: number
+	logger?: Logger
+}
+
 export abstract class Worker {
 	protected readonly logger: Logger
 
-	public constructor(private readonly queue: Queue, logger?: Logger) {
-		if (logger) {
-			this.logger = logger
+	private readonly maxAttempts: number
+	private readonly timeoutEmpty: number
+	private readonly timeoutNonEmpty: number
+
+	public constructor(private readonly queue: Queue, opts: WorkerOpts) {
+		if (opts.logger) {
+			this.logger = opts.logger
 		} else {
 			this.logger = newLogger({ name: "pgmq", level: "info" })
 		}
+
+		this.maxAttempts = opts.maxAttempts || MAX_ATTEMPTS
+		this.timeoutEmpty = opts.timeoutEmpty || TIMEOUT_EMPTY
+		this.timeoutNonEmpty = opts.timeoutNonEmpty || TIMEOUT_NON_EMPTY
 	}
 
 	abstract process(task: Document<QueueType>): Promise<any>
@@ -49,7 +64,7 @@ export abstract class Worker {
 										`err when processing task ${task.id}`,
 										err
 									)
-									if (task.attempts$ > MAX_ATTEMPTS) {
+									if (task.attempts$ > this.maxAttempts) {
 										return this.queue
 											.moveToDlq(task, err)
 											.action(conn)
@@ -66,7 +81,7 @@ export abstract class Worker {
 				await new Promise((resolve) =>
 					setTimeout(
 						resolve,
-						task === null ? TIMEOUT_EMPTY : TIMEOUT_NON_EMPTY
+						task === null ? this.timeoutEmpty : this.timeoutNonEmpty
 					)
 				)
 			}
