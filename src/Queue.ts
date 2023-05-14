@@ -9,19 +9,20 @@ import {
 	DoneType,
 } from "./model"
 
-
 function ts(): Date {
 	return new Date()
 }
 
-
 export class Queue {
 	private constructor(
 		public readonly name: string,
-		private readonly queue: Collection<typeof QueueSchema.schema, QueueType>,
+		private readonly queue: Collection<
+			typeof QueueSchema.schema,
+			QueueType
+		>,
 		private readonly dlq: Collection<typeof DlqSchema.schema, DlqType>,
 		private readonly done: Collection<typeof DoneSchema.schema, DoneType>,
-		private readonly now: () => Date = ts,
+		private readonly now: () => Date = ts
 	) {}
 
 	public enqueue(
@@ -105,7 +106,7 @@ export class Queue {
 	public static async create(
 		bongo: Bongo,
 		name: string,
-		tsFactory: () => Date = ts,
+		tsFactory: () => Date = ts
 	): Promise<Queue> {
 		const queue = bongo.collection(QueueSchema)
 		const dlq = bongo.collection(DlqSchema)
