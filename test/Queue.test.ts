@@ -41,4 +41,17 @@ test("Queue", async (t) => {
 			t.match(found, null)
 		}
 	)
+
+	await t.test("return to queue with backoff", async (t) => {
+		const ts = new Date()
+		const backoffBase = 2
+		const q = await Queue.create(bongo, "bar", () => ts)
+
+		await queue.enqueue({ bar: "bar" }).run(bongo.tr)
+		let task = await queue.dequeue().run(bongo.tr)
+		task = await q.returnToQueue(task as any, backoffBase).run(bongo.tr)
+		t.match(new Date(task.visibleAt$ as any).getTime(), ts.getTime() + 1000)
+
+		await q.purge().run(bongo.tr)
+	})
 })

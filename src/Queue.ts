@@ -9,12 +9,19 @@ import {
 	DoneType,
 } from "./model"
 
+
+function ts(): Date {
+	return new Date()
+}
+
+
 export class Queue {
 	private constructor(
 		public readonly name: string,
-		private readonly queue: Collection<QueueType>,
-		private readonly dlq: Collection<DlqType>,
-		private readonly done: Collection<DoneType>
+		private readonly queue: Collection<typeof QueueSchema.schema, QueueType>,
+		private readonly dlq: Collection<typeof DlqSchema.schema, DlqType>,
+		private readonly done: Collection<typeof DoneSchema.schema, DoneType>,
+		private readonly now: () => Date = ts,
 	) {}
 
 	public enqueue(
@@ -95,11 +102,11 @@ export class Queue {
 		return sequence(this.queue.drop(), this.dlq.drop(), this.done.drop())
 	}
 
-	private now(): Date {
-		return new Date()
-	}
-
-	public static async create(bongo: Bongo, name: string): Promise<Queue> {
+	public static async create(
+		bongo: Bongo,
+		name: string,
+		tsFactory: () => Date = ts,
+	): Promise<Queue> {
 		const queue = bongo.collection(QueueSchema)
 		const dlq = bongo.collection(DlqSchema)
 		const done = bongo.collection(DoneSchema)
@@ -110,6 +117,6 @@ export class Queue {
 			done.ensurePartition()
 		).transact(bongo.tr)
 
-		return new Queue(name, queue, dlq, done)
+		return new Queue(name, queue, dlq, done, tsFactory)
 	}
 }
