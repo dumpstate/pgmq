@@ -51,11 +51,14 @@ export class Queue {
 	}
 
 	public returnToQueue(
-		task: Document<QueueType>
+		task: Document<QueueType>,
+		backoffBase: number
 	): DBAction<Document<QueueType>> {
 		task.attempts = task.attempts$ + 1
-		// FIXME
-		task.visibleAt = this.now()
+		task.visibleAt = new Date(
+			this.now().getTime() +
+				Math.pow(backoffBase, task.attempts$ - 1) * 1000
+		)
 
 		return this.queue.save(task)
 	}

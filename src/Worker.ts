@@ -8,11 +8,13 @@ import { QueueType } from "./model"
 const MAX_ATTEMPTS = 3
 const TIMEOUT_EMPTY = 1000
 const TIMEOUT_NON_EMPTY = 50
+const BACKOFF_BASE = 1
 
 export interface WorkerOpts {
 	maxAttempts?: number
 	timeoutEmpty?: number
 	timeoutNonEmpty?: number
+	backoffBase?: number
 	logger?: Logger
 }
 
@@ -22,6 +24,7 @@ export abstract class Worker {
 	private readonly maxAttempts: number
 	private readonly timeoutEmpty: number
 	private readonly timeoutNonEmpty: number
+	private readonly backoffBase: number
 
 	public constructor(private readonly queue: Queue, opts: WorkerOpts) {
 		if (opts.logger) {
@@ -33,6 +36,7 @@ export abstract class Worker {
 		this.maxAttempts = opts.maxAttempts || MAX_ATTEMPTS
 		this.timeoutEmpty = opts.timeoutEmpty || TIMEOUT_EMPTY
 		this.timeoutNonEmpty = opts.timeoutNonEmpty || TIMEOUT_NON_EMPTY
+		this.backoffBase = opts.backoffBase || BACKOFF_BASE
 	}
 
 	abstract process(task: Document<QueueType>): Promise<any>
@@ -70,7 +74,10 @@ export abstract class Worker {
 											.action(conn)
 									} else {
 										return this.queue
-											.returnToQueue(task)
+											.returnToQueue(
+												task,
+												this.backoffBase
+											)
 											.action(conn)
 									}
 								})
