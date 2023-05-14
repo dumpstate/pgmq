@@ -16,12 +16,9 @@ function ts(): Date {
 export class Queue {
 	private constructor(
 		public readonly name: string,
-		private readonly queue: Collection<
-			typeof QueueSchema.schema,
-			QueueType
-		>,
-		private readonly dlq: Collection<typeof DlqSchema.schema, DlqType>,
-		private readonly done: Collection<typeof DoneSchema.schema, DoneType>,
+		private readonly queue: Collection<QueueType>,
+		private readonly dlq: Collection<DlqType>,
+		private readonly done: Collection<DoneType>,
 		private readonly now: () => Date = ts
 	) {}
 
