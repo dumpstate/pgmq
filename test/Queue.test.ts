@@ -24,13 +24,17 @@ describe("Queue", () => {
 		const task = { foo: "enqueue then dequeue" }
 
 		await queue.enqueue(task).transact(bongo.tr)
+		assert.equal(await queue.size().run(bongo.tr), 1)
 
 		await queue
 			.dequeue()
 			.map((found) => {
 				assert.deepEqual(found?.payload$, task)
+				return found
 			})
+			.flatMap((taskFromQueue) => queue.moveToDone(taskFromQueue))
 			.transact(bongo.tr)
+		assert.equal(await queue.size().run(bongo.tr), 0)
 	})
 
 	it("dequeue returns null if visibility timeout not yet expired", async () => {
@@ -49,14 +53,30 @@ describe("Queue", () => {
 		const backoffBase = 2
 		const q = await Queue.create(bongo, "bar", () => ts)
 
-		await queue.enqueue({ bar: "bar" }).run(bongo.tr)
-		let task = await queue.dequeue().run(bongo.tr)
-		task = await q.returnToQueue(task as any, backoffBase).run(bongo.tr)
-		assert.equal(
-			new Date(task.visibleAt$ as any).getTime(),
-			ts.getTime() + 1000,
-		)
+		await q.enqueue({ bar: "bar" }).run(bongo.tr)
+		await q
+			.dequeue()
+			.flatMap((task) =>
+				q.returnToQueue(task as any, backoffBase).map((res) => {
+					assert.equal(
+						new Date(res.visibleAt$).getTime(),
+						ts.getTime() + 1000,
+					)
+					return res
+				}),
+			)
+			.transact(bongo.tr)
 
 		await q.purge().run(bongo.tr)
+	})
+
+	it("should move to DLQ if too many attempts", async () => {
+		const task = await queue.enqueue({ foo: "foo" }).transact(bongo.tr)
+		assert.equal(await queue.size().run(bongo.tr), 1)
+		assert.equal(await queue.dlqSize().run(bongo.tr), 0)
+
+		await queue.moveToDlq(task, "oops").transact(bongo.tr)
+		assert.equal(await queue.size().run(bongo.tr), 0)
+		assert.equal(await queue.dlqSize().run(bongo.tr), 1)
 	})
 })

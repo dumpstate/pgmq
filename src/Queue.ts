@@ -16,7 +16,7 @@ function ts(): Date {
 export class Queue {
 	private constructor(
 		public readonly name: string,
-		private readonly queue: Collection<QueueType>,
+		public readonly queue: Collection<QueueType>,
 		private readonly dlq: Collection<DlqType>,
 		private readonly done: Collection<DoneType>,
 		private readonly now: () => Date = ts,
@@ -55,29 +55,35 @@ export class Queue {
 			})
 	}
 
+	public attempt(task: Document<QueueType>): DBAction<Document<QueueType>> {
+		task.attempts = task.attempts$ + 1
+		return this.queue.save(task)
+	}
+
 	public returnToQueue(
 		task: Document<QueueType>,
 		backoffBase: number,
 	): DBAction<Document<QueueType>> {
-		task.attempts = task.attempts$ + 1
-		task.visibleAt = new Date(
-			this.now().getTime() +
-				Math.pow(backoffBase, task.attempts$ - 1) * 1000,
-		)
+		if (backoffBase >= 0) {
+			task.visibleAt = new Date(
+				this.now().getTime() +
+					Math.pow(backoffBase, task.attempts$) * 1000,
+			)
+		}
 
 		return this.queue.save(task)
 	}
 
 	public moveToDlq(
 		task: Document<QueueType>,
-		error: string,
+		error: Error | string,
 	): DBAction<Document<QueueType>> {
 		return sequence(
 			this.queue.deleteById(task.id),
 			this.dlq.create({
 				name: this.name,
 				createdAt: this.now(),
-				error,
+				error: typeof error === "string" ? error : error.toString(),
 				payload: task.payload$,
 			}),
 		).map((_) => task)
@@ -98,6 +104,18 @@ export class Queue {
 
 	public purge(): DBAction<[number, number, number]> {
 		return sequence(this.queue.drop(), this.dlq.drop(), this.done.drop())
+	}
+
+	public size(): DBAction<number> {
+		return this.queue.count({})
+	}
+
+	public dlqSize(): DBAction<number> {
+		return this.dlq.count({})
+	}
+
+	public doneSize(): DBAction<number> {
+		return this.done.count({})
 	}
 
 	public static async create(

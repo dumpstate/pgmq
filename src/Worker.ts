@@ -44,19 +44,19 @@ export abstract class Worker {
 
 	abstract process(task: Document<QueueType>): Promise<any>
 
-	public async run(bongo: Bongo) {
-		this.logger.info(`Starting worker loop: ${this.queue.name}`)
+	public async step(bongo: Bongo): Promise<Document<QueueType> | null> {
+		return this.queue
+			.dequeue()
+			.flatMap((task) => {
+				if (task === null) {
+					return pure(null)
+				}
 
-		try {
-			while (true) {
-				const task = await this.queue
-					.dequeue()
-					.flatMap((task) => {
-						if (task === null) {
-							return pure(null)
-						}
-
-						return new DBAction((conn: PoolClient) =>
+				return new DBAction((conn: PoolClient) =>
+					this.queue
+						.attempt(task)
+						.action(conn)
+						.then((task) =>
 							this.process(task)
 								.then(() => {
 									this.logger.info(
@@ -71,7 +71,7 @@ export abstract class Worker {
 										`err when processing task ${task.id}`,
 										err,
 									)
-									if (task.attempts$ > this.maxAttempts) {
+									if (task.attempts$ >= this.maxAttempts) {
 										return this.queue
 											.moveToDlq(task, err)
 											.action(conn)
@@ -84,9 +84,18 @@ export abstract class Worker {
 											.action(conn)
 									}
 								}),
-						)
-					})
-					.transact(bongo.tr)
+						),
+				)
+			})
+			.transact(bongo.tr)
+	}
+
+	public async run(bongo: Bongo) {
+		this.logger.info(`Starting worker loop: ${this.queue.name}`)
+
+		try {
+			while (true) {
+				const task = await this.step(bongo)
 
 				await new Promise((resolve) =>
 					setTimeout(
