@@ -26,7 +26,10 @@ export abstract class Worker {
 	private readonly timeoutNonEmpty: number
 	private readonly backoffBase: number
 
-	public constructor(private readonly queue: Queue, opts: WorkerOpts) {
+	public constructor(
+		private readonly queue: Queue,
+		opts: WorkerOpts,
+	) {
 		if (opts.logger) {
 			this.logger = opts.logger
 		} else {
@@ -57,7 +60,7 @@ export abstract class Worker {
 							this.process(task)
 								.then(() => {
 									this.logger.info(
-										`Moving task ${task.id} to DONE`
+										`Moving task ${task.id} to DONE`,
 									)
 									return this.queue
 										.moveToDone(task)
@@ -66,7 +69,7 @@ export abstract class Worker {
 								.catch((err) => {
 									this.logger.error(
 										`err when processing task ${task.id}`,
-										err
+										err,
 									)
 									if (task.attempts$ > this.maxAttempts) {
 										return this.queue
@@ -76,11 +79,11 @@ export abstract class Worker {
 										return this.queue
 											.returnToQueue(
 												task,
-												this.backoffBase
+												this.backoffBase,
 											)
 											.action(conn)
 									}
-								})
+								}),
 						)
 					})
 					.transact(bongo.tr)
@@ -88,8 +91,10 @@ export abstract class Worker {
 				await new Promise((resolve) =>
 					setTimeout(
 						resolve,
-						task === null ? this.timeoutEmpty : this.timeoutNonEmpty
-					)
+						task === null
+							? this.timeoutEmpty
+							: this.timeoutNonEmpty,
+					),
 				)
 			}
 		} catch (err) {

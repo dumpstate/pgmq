@@ -19,12 +19,12 @@ export class Queue {
 		private readonly queue: Collection<QueueType>,
 		private readonly dlq: Collection<DlqType>,
 		private readonly done: Collection<DoneType>,
-		private readonly now: () => Date = ts
+		private readonly now: () => Date = ts,
 	) {}
 
 	public enqueue(
 		task: Record<string, string>,
-		visibleAt: Date | null = null
+		visibleAt: Date | null = null,
 	): DBAction<Document<QueueType>> {
 		const now = this.now()
 
@@ -44,7 +44,7 @@ export class Queue {
 					name: this.name,
 					visibleAt: { $lte: this.now() },
 				},
-				{ forUpdate: true, limit: 1 }
+				{ forUpdate: true, limit: 1 },
 			)
 			.map((items) => {
 				if (items.length === 0) {
@@ -57,12 +57,12 @@ export class Queue {
 
 	public returnToQueue(
 		task: Document<QueueType>,
-		backoffBase: number
+		backoffBase: number,
 	): DBAction<Document<QueueType>> {
 		task.attempts = task.attempts$ + 1
 		task.visibleAt = new Date(
 			this.now().getTime() +
-				Math.pow(backoffBase, task.attempts$ - 1) * 1000
+				Math.pow(backoffBase, task.attempts$ - 1) * 1000,
 		)
 
 		return this.queue.save(task)
@@ -70,7 +70,7 @@ export class Queue {
 
 	public moveToDlq(
 		task: Document<QueueType>,
-		error: string
+		error: string,
 	): DBAction<Document<QueueType>> {
 		return sequence(
 			this.queue.deleteById(task.id),
@@ -79,12 +79,12 @@ export class Queue {
 				createdAt: this.now(),
 				error,
 				payload: task.payload$,
-			})
+			}),
 		).map((_) => task)
 	}
 
 	public moveToDone(
-		task: Document<QueueType>
+		task: Document<QueueType>,
 	): DBAction<Document<QueueType>> {
 		return sequence(
 			this.queue.deleteById(task.id),
@@ -92,7 +92,7 @@ export class Queue {
 				name: this.name,
 				createdAt: this.now(),
 				payload: task.payload$,
-			})
+			}),
 		).map((_) => task)
 	}
 
@@ -103,7 +103,7 @@ export class Queue {
 	public static async create(
 		bongo: Bongo,
 		name: string,
-		tsFactory: () => Date = ts
+		tsFactory: () => Date = ts,
 	): Promise<Queue> {
 		const queue = bongo.collection(QueueSchema)
 		const dlq = bongo.collection(DlqSchema)
@@ -112,7 +112,7 @@ export class Queue {
 		await sequence(
 			queue.ensurePartition(),
 			dlq.ensurePartition(),
-			done.ensurePartition()
+			done.ensurePartition(),
 		).transact(bongo.tr)
 
 		return new Queue(name, queue, dlq, done, tsFactory)

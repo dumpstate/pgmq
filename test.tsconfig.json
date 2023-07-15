@@ -1,9 +1,0 @@
-{
-	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"outDir": "./libtest",
-		"strictNullChecks": false,
-		"strictPropertyInitialization": false
-	},
-	"include": ["./test/**/*"]
-}
