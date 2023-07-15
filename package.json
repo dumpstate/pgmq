@@ -30,7 +30,7 @@
 		"@dumpstate/dbaction": "^0.2.5"
 	},
 	"publishConfig": {
-		"registry": "https://npm.pkg.github.com/",
+		"registry": "https://registry.npmjs.org/",
 		"access": "public"
 	}
 }
